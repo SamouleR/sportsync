@@ -1,0 +1,413 @@
+/* ===== SportSync Monochrome Minimalist System ===== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Black and White Theme */
+  --bg-primary: #FFFFFF; /* Pure White */
+  --bg-secondary: #F5F5F5;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FAFAFA;
+  --bg-elevated: #FFFFFF;
+  --bg-input: #FFFFFF;
+
+  /* Text */
+  --text-primary: #000000; /* Pure Black */
+  --text-secondary: #404040;
+  --text-muted: #737373;
+
+  /* Brand mapped to Black */
+  --primary: #000000;
+  --primary-light: #525252;
+  --primary-dark: #000000;
+  --accent: #000000;
+  --accent-green: #000000;
+  --accent-red: #000000;
+  --accent-orange: #000000;
+
+  /* Borders */
+  --border-color: #E5E5E5;
+  --border-active: #000000;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+  /* Radius (Sharper for brutalist feel) */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.bg-mesh {
+  display: none; /* Removed for strict monochrome */
+}
+
+/* ===== Typography ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.text-gradient {
+  background: none;
+  color: var(--text-primary);
+}
+
+/* ===== Glass Card (Now Solid Minimalist Card) ===== */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+}
+
+.glass-card:hover {
+  border-color: var(--text-muted);
+  transform: translateY(-2px);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
+}
+
+.btn-primary:hover {
+  background: #e0e0e0;
+  border-color: #e0e0e0;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.btn-success, .btn-danger, .btn-warning {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-success:hover, .btn-danger:hover, .btn-warning:hover {
+  border-color: var(--text-primary);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.75rem;
+}
+
+.btn-lg {
+  padding: 16px 32px;
+  font-size: 1rem;
+}
+
+.btn-icon {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+}
+
+/* ===== Inputs ===== */
+.input-field, .textarea-field, .select-field {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem;
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+.input-field::placeholder, .textarea-field::placeholder {
+  color: var(--text-muted);
+}
+
+.input-field:focus, .textarea-field:focus, .select-field:focus {
+  border-color: var(--text-primary);
+}
+
+.input-label {
+  display: block;
+  font-size: 0.75rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.select-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ffffff' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  cursor: pointer;
+}
+
+.select-field option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.badge-primary, .badge-success, .badge-danger, .badge-warning, .badge-info {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* ===== Avatar ===== */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm); /* Sharp edges */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  background: var(--bg-elevated) !important; /* Force monochrome */
+  border: 1px solid var(--border-color);
+  color: var(--text-primary) !important;
+}
+
+.avatar-sm { width: 32px; height: 32px; font-size: 0.75rem; }
+.avatar-lg { width: 56px; height: 56px; font-size: 1.1rem; }
+
+/* ===== Page Transitions ===== */
+.page-enter {
+  animation: pageEnter 0.4s ease forwards;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-enter {
+  animation: cardEnter 0.5s ease forwards;
+  opacity: 0;
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Stagger children ===== */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  padding: 14px 24px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: transform 0.4s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Legacy layout classes removed in favor of Tailwind CSS utility classes */
+
+/* ===== Tab / Role Switcher ===== */
+.role-switcher {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.role-option {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.role-option.active {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.role-option:not(.active):hover {
+  color: var(--text-primary);
+}
+
+/* ===== Stat Card ===== */
+.stat-card {
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-base);
+}
+
+.stat-card:hover {
+  border-color: var(--text-secondary);
+}
+
+/* ===== Modal Overlay ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalEnter 0.3s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* End of file */
