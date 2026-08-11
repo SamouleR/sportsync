@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -23,6 +24,10 @@ model User {
   photoUrl     String?
   coachComment String?
   medicalStatus String? @default("Manquant")
+
+  // Auth fields
+  twoFactorCode    String?
+  twoFactorExpires DateTime?
 
   // Relations
   stats             UserStats?

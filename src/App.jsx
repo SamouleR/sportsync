@@ -18,13 +18,17 @@ export const ToastContext = createContext(null);
 export const useToast = () => useContext(ToastContext);
 
 function App() {
-  const { user, login: apiLogin, logout: apiLogout, loading } = useAuthHook();
+  const { user, login: apiLogin, logout: apiLogout, loading, verify2FA: apiVerify2FA } = useAuthHook();
   const [toastMsg, setToastMsg] = useState(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [unauthView, setUnauthView] = useState('landing');
 
-  const loginUser = async (email, password) => {
-    return await apiLogin(email, password);
+  const loginUser = async (email, password, captchaId, captchaValue) => {
+    return await apiLogin(email, password, captchaId, captchaValue);
+  };
+
+  const verify2FA = async (email, code) => {
+    return await apiVerify2FA(email, code);
   };
 
   const logoutUser = () => {
@@ -59,7 +63,7 @@ function App() {
   if (loading) return <div>Chargement...</div>;
 
   return (
-    <AuthContext.Provider value={{ user, loginUser, logoutUser }}>
+    <AuthContext.Provider value={{ user, loginUser, logoutUser, verify2FA }}>
       <ToastContext.Provider value={{ showToast }}>
         <div className="bg-mesh" aria-hidden="true" />
         

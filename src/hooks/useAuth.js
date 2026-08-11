@@ -16,11 +16,26 @@ export const useAuthHook = () => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, captchaId, captchaValue) => {
     try {
       setError(null);
-      const data = await authService.login(email, password);
-      // data contains { user, token }
+      const data = await authService.login(email, password, captchaId, captchaValue);
+      if (data.status === '2FA_REQUIRED') {
+        return data;
+      }
+      setUser(data.user);
+      sessionStorage.setItem('sportsync_session', JSON.stringify(data));
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const verify2FA = async (email, code) => {
+    try {
+      setError(null);
+      const data = await authService.verify2FA(email, code);
       setUser(data.user);
       sessionStorage.setItem('sportsync_session', JSON.stringify(data));
       return data.user;
@@ -35,5 +50,5 @@ export const useAuthHook = () => {
     sessionStorage.removeItem('sportsync_session');
   };
 
-  return { user, loading, error, login, logout, setUser };
+  return { user, loading, error, login, logout, setUser, verify2FA };
 };

@@ -53,7 +53,9 @@ const del = async (path) => {
 // ============ AUTH SERVICE ====================
 // =============================================
 export const authService = {
-  login: (email, password) => post('/auth/login', { email, password }),
+  getCaptcha: () => get('/auth/captcha'),
+  login: (email, password, captchaId, captchaValue) => post('/auth/login', { email, password, captchaId, captchaValue }),
+  verify2FA: (email, code) => post('/auth/verify-2fa', { email, code }),
 };
 
 // =============================================
