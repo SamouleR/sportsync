@@ -8,6 +8,7 @@ import TrainingDetail from './TrainingDetail.jsx';
 import PlayersManagement from './PlayersManagement.jsx';
 import MedicalModule from './MedicalModule.jsx';
 import MatchConvocation from './MatchConvocation.jsx';
+import { motion, AnimatePresence } from 'framer-motion';
 import NotificationsPanel from './NotificationsPanel.jsx';
 import SportConfig from './SportConfig.jsx';
 import ParentDashboard from './ParentDashboard.jsx';

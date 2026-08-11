@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useUsers } from '../hooks/useUsers.js';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { motion } from 'framer-motion';
 
 export default function PerformanceAnalytics({ team }) {
   const { getPlayers, loading } = useUsers();
@@ -11,109 +13,158 @@ export default function PerformanceAnalytics({ team }) {
     setSelectedPlayer(players[0]);
   }
 
-  // Simple SVG Radar Chart
-  const drawRadar = (stats) => {
-    if (!stats) return null;
-    const center = 100;
-    const radius = 80;
-    const attributes = ['rating', 'stamina', 'form', 'pace', 'passing', 'shooting', 'defense'];
-    const angles = attributes.map((_, i) => (Math.PI * 2 * i) / attributes.length - Math.PI / 2);
+  // Format data for Recharts Radar
+  const getRadarData = (stats) => {
+    if (!stats) return [];
+    return [
+      { subject: 'Vitesse', A: stats.pace || 50, fullMark: 100 },
+      { subject: 'Passe', A: stats.passing || 50, fullMark: 100 },
+      { subject: 'Tir', A: stats.shooting || 50, fullMark: 100 },
+      { subject: 'Défense', A: stats.defense || 50, fullMark: 100 },
+      { subject: 'Général', A: stats.rating || 50, fullMark: 100 },
+      { subject: 'Endurance', A: stats.stamina || 50, fullMark: 100 },
+      { subject: 'Forme', A: (stats.form || 5) * 10, fullMark: 100 },
+    ];
+  };
 
-    const getPoint = (val, angle) => {
-      const normalized = val <= 10 ? val * 10 : val;
-      const r = (normalized / 100) * radius;
-      return `${center + r * Math.cos(angle)},${center + r * Math.sin(angle)}`;
-    };
-
-    const points = attributes.map((attr, i) => getPoint(stats[attr] || 50, angles[i])).join(' ');
-
-    return (
-      <svg width="200" height="200" viewBox="0 0 200 200" style={{ overflow: 'visible' }}>
-        {[0.2, 0.4, 0.6, 0.8, 1].map((scale, idx) => (
-          <polygon
-            key={`grid-${idx}`}
-            points={attributes.map((_, i) => `${center + radius * scale * Math.cos(angles[i])},${center + radius * scale * Math.sin(angles[i])}`).join(' ')}
-            fill="none"
-            stroke="var(--border-color)"
-            strokeWidth="1"
-          />
-        ))}
-        {angles.map((angle, i) => (
-          <line key={`axis-${i}`} x1={center} y1={center} x2={center + radius * Math.cos(angle)} y2={center + radius * Math.sin(angle)} stroke="var(--border-color)" strokeWidth="1" />
-        ))}
-        <polygon points={points} fill="rgba(0,0,0,0.1)" stroke="var(--text-primary)" strokeWidth="2" />
-        {attributes.map((attr, i) => (
-          <text key={`label-${i}`} x={center + (radius + 20) * Math.cos(angles[i])} y={center + (radius + 20) * Math.sin(angles[i])} fontSize="10" fill="var(--text-secondary)" textAnchor="middle" dominantBaseline="middle" style={{ textTransform: 'uppercase', fontWeight: 600 }}>
-            {attr}
-          </text>
-        ))}
-      </svg>
-    );
+  // Mock data for LineChart (Performance history)
+  const getHistoryData = () => {
+    return [
+      { name: 'Août', note: 6.5 },
+      { name: 'Sept', note: 7.2 },
+      { name: 'Oct', note: 7.0 },
+      { name: 'Nov', note: 7.8 },
+      { name: 'Déc', note: 8.1 },
+      { name: 'Janv', note: 7.5 },
+    ];
   };
 
   return (
-    <div className="page-enter" style={{ maxWidth: 900 }}>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="page-enter" 
+      style={{ maxWidth: 1000 }}
+    >
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: '1.8rem', marginBottom: 8, textTransform: 'uppercase' }}>
-          ANALYTIQUE & PERFORMANCES
+          Analytique & Performances
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Analyse approfondie des profils athlétiques et techniques.
+          Suivi avancé des statistiques des joueurs avec Recharts.
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-        {/* Player Selection */}
-        <div className="glass-card" style={{ padding: 16, width: 250, maxHeight: 600, overflowY: 'auto' }}>
-          <h3 style={{ fontSize: '0.9rem', marginBottom: 16, color: 'var(--text-secondary)' }}>EFFECTIF</h3>
-          {players.map(p => (
-            <div key={p.id} onClick={() => setSelectedPlayer(p)} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '10px',
-              borderBottom: '1px solid var(--border-color)', cursor: 'pointer',
-              background: selectedPlayer?.id === p.id ? 'var(--bg-secondary)' : 'transparent'
-            }}>
-              <div className="avatar avatar-sm">{p.avatar}</div>
-              <div style={{ flex: 1, fontSize: '0.85rem', fontWeight: selectedPlayer?.id === p.id ? 700 : 500 }}>
-                {p.name}
-              </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+        
+        {/* Left Column: Player Selection & Summary */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="glass-card" style={{ padding: 24 }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Sélectionner un joueur</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 300, overflowY: 'auto', paddingRight: 8 }} className="custom-scroll">
+              {players.map(p => (
+                <div 
+                  key={p.id} 
+                  onClick={() => setSelectedPlayer(p)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                    borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                    background: selectedPlayer?.id === p.id ? 'rgba(108,92,231,0.1)' : 'transparent',
+                    border: `1px solid ${selectedPlayer?.id === p.id ? 'rgba(108,92,231,0.3)' : 'transparent'}`,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div className="avatar avatar-sm" style={{ background: p.photoUrl ? `url(${p.photoUrl}) center/cover` : p.avatarColor, color: 'white' }}>
+                    {!p.photoUrl && p.avatar}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{p.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.position || 'N/A'}</div>
+                  </div>
+                  {p.stats?.rating && (
+                    <div className="badge badge-primary" style={{ fontSize: '0.7rem' }}>{p.stats.rating}</div>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {selectedPlayer && (
+            <motion.div 
+              key={selectedPlayer.id}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="glass-card" 
+              style={{ padding: 24, display: 'flex', alignItems: 'center', gap: 20 }}
+            >
+              <div className="avatar" style={{ width: 80, height: 80, fontSize: '2rem', background: selectedPlayer.photoUrl ? `url(${selectedPlayer.photoUrl}) center/cover` : selectedPlayer.avatarColor, color: 'white' }}>
+                {!selectedPlayer.photoUrl && selectedPlayer.avatar}
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', marginBottom: 4 }}>{selectedPlayer.name}</h2>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <span className="badge badge-info">{selectedPlayer.position || 'Non défini'}</span>
+                  <span className="badge badge-success">Général : {selectedPlayer.stats?.rating || 'N/A'}</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
 
-        {/* Analytics Display */}
-        {selectedPlayer && selectedPlayer.stats && (
-          <div className="glass-card" style={{ flex: 1, padding: 32, minWidth: 300, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '1.4rem', textTransform: 'uppercase', marginBottom: 4 }}>{selectedPlayer.name}</h2>
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: 32 }}>{selectedPlayer.position}</div>
-
-            <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-              {/* Radar Chart */}
-              <div style={{ padding: 24, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                {drawRadar(selectedPlayer.stats)}
+        {/* Right Column: Recharts Graphs */}
+        {selectedPlayer ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            
+            {/* Radar Chart */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="glass-card" 
+              style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            >
+              <h3 style={{ fontSize: '1rem', width: '100%', marginBottom: 16 }}>Profil Technique (Radar)</h3>
+              <div style={{ width: '100%', height: 320 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={getRadarData(selectedPlayer.stats)}>
+                    <PolarGrid stroke="var(--border-color)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontWeight: 600 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                    <Radar name={selectedPlayer.name} dataKey="A" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.4} />
+                    <RechartsTooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', borderRadius: 8, color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--primary)' }} />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
+            </motion.div>
 
-              {/* Stats Bars */}
-              <div style={{ flex: 1, minWidth: 250, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {Object.entries(selectedPlayer.stats).filter(([key]) => !['id', 'userId'].includes(key)).map(([key, val]) => {
-                  if (val === null || val === undefined) return null;
-                  const normalized = val <= 10 ? val * 10 : val;
-                  return (
-                    <div key={key}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>
-                        <span>{key}</span>
-                        <span>{val}</span>
-                      </div>
-                      <div style={{ height: 6, background: 'var(--border-color)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${normalized}%`, background: 'var(--text-primary)', transition: 'width 0.5s ease' }} />
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* Line Chart */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="glass-card" 
+              style={{ padding: 24 }}
+            >
+              <h3 style={{ fontSize: '1rem', width: '100%', marginBottom: 16 }}>Évolution de la Note (Saison)</h3>
+              <div style={{ width: '100%', height: 250 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={getHistoryData()} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+                    <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickMargin={10} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 10]} stroke="var(--text-muted)" fontSize={12} axisLine={false} tickLine={false} />
+                    <RechartsTooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', borderRadius: 8 }} />
+                    <Line type="monotone" dataKey="note" stroke="var(--accent)" strokeWidth={3} dot={{ r: 5, fill: 'var(--bg-card)', strokeWidth: 2 }} activeDot={{ r: 7 }} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-            </div>
+            </motion.div>
+          </div>
+        ) : (
+          <div className="glass-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: 'var(--text-muted)' }}>
+            Sélectionnez un joueur pour voir ses statistiques Recharts.
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
