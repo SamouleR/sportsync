@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { io } from '../server.js';
 const prisma = new PrismaClient();
 
 export const getAllMatches = async (req, res) => {
@@ -89,6 +90,8 @@ export const updateConvocations = async (req, res) => {
       });
     }
 
+    io.to(`team_${match.team}`).emit('matchConvocationsUpdated', match);
+
     res.json(match);
   } catch (error) {
     console.error('Error updating convocations:', error);
@@ -103,6 +106,7 @@ export const updateLineup = async (req, res) => {
       where: { id: req.params.id },
       data: { lineup: JSON.stringify(lineup) }
     });
+    io.to(`team_${match.team}`).emit('matchLineupUpdated', match);
     res.json(match);
   } catch (error) {
     console.error('Error updating lineup:', error);

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { io } from '../server.js';
 const prisma = new PrismaClient();
 
 export const getAllTrainings = async (req, res) => {
@@ -76,6 +77,12 @@ export const setTrainingResponse = async (req, res) => {
       update: { status, remark, arrivalTime },
       create: { trainingId: req.params.id, playerId, status, remark, arrivalTime }
     });
+
+    const training = await prisma.training.findUnique({ where: { id: req.params.id } });
+    if (training) {
+      io.to(`team_${training.team}`).emit('trainingResponseUpdated', response);
+    }
+
     res.json(response);
   } catch (error) {
     console.error('Error setting response:', error);
@@ -104,6 +111,12 @@ export const sendTrainingMessage = async (req, res) => {
       data: { trainingId: req.params.id, userId, text },
       include: { user: { select: { name: true, avatar: true, avatarColor: true } } }
     });
+
+    const training = await prisma.training.findUnique({ where: { id: req.params.id } });
+    if (training) {
+      io.to(`team_${training.team}`).emit('trainingMessage', message);
+    }
+
     res.json(message);
   } catch (error) {
     console.error('Error sending message:', error);

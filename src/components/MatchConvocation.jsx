@@ -3,6 +3,7 @@ import { useAuth, useToast } from '../App.jsx';
 import { useMatches } from '../hooks/useMatches.js';
 import { useUsers } from '../hooks/useUsers.js';
 import { useMedical } from '../hooks/useMedical.js';
+import { useSocket } from '../hooks/useSocket.js';
 import { DEFAULT_CLUB_CONFIG, LOCATIONS } from '../data/constants.js';
 import LineupBuilder from './LineupBuilder.jsx';
 
@@ -12,7 +13,14 @@ export default function MatchConvocation({ onViewMatch }) {
   const isCoach = user.role === 'coach' || user.role === 'admin';
   const isParent = user.role === 'parent';
   
-  const { getUpcoming, create, loading: matchesLoading } = useMatches(user.team);
+  const { getUpcoming, create, loading: matchesLoading, refresh } = useMatches(user.team);
+  const { subscribe } = useSocket();
+
+  useEffect(() => {
+    const unsub1 = subscribe('matchConvocationsUpdated', refresh);
+    const unsub2 = subscribe('matchLineupUpdated', refresh);
+    return () => { unsub1?.(); unsub2?.(); };
+  }, [subscribe, refresh]);
   
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ title:'', date:'', startTime:'', endTime:'', location:'', opponent:'', type:'domicile' });

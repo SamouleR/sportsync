@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth, useToast } from '../App.jsx';
 import { useTrainings } from '../hooks/useTrainings.js';
 import { useUsers } from '../hooks/useUsers.js';
+import { useSocket } from '../hooks/useSocket.js';
 
 export default function TrainingDetail({ trainingId, onBack }) {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { trainings, getById, getStats, remove, sendMessage: sendMsg, loading: trainingsLoading } = useTrainings(user.team);
+  const { trainings, getById, getStats, remove, sendMessage: sendMsg, loading: trainingsLoading, refresh } = useTrainings(user.team);
   const { users, getPlayers, loading: usersLoading } = useUsers();
+  const { subscribe } = useSocket();
   
   const [training, setTraining] = useState(null);
   const [responses, setResponses] = useState([]);
@@ -32,6 +34,12 @@ export default function TrainingDetail({ trainingId, onBack }) {
       setMessages(t.messages || []);
     }
   }, [trainingId, trainingsLoading, usersLoading, trainings]);
+  
+  useEffect(() => {
+    const unsub1 = subscribe('trainingMessage', refresh);
+    const unsub2 = subscribe('trainingResponseUpdated', refresh);
+    return () => { unsub1?.(); unsub2?.(); };
+  }, [subscribe, refresh]);
   
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages]);
 
