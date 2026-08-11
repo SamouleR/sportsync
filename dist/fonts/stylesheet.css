@@ -1,0 +1,234 @@
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-BlackItalic.eot');
+    src: local('Neulis Black Italic'), local('Neulis-BlackItalic'),
+        url('Neulis-BlackItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-BlackItalic.woff2') format('woff2'),
+        url('Neulis-BlackItalic.woff') format('woff'),
+        url('Neulis-BlackItalic.ttf') format('truetype');
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-Black.eot');
+    src: local('Neulis Black'), local('Neulis-Black'),
+        url('Neulis-Black.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-Black.woff2') format('woff2'),
+        url('Neulis-Black.woff') format('woff'),
+        url('Neulis-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis Extra';
+    src: url('Neulis-ExtraBold.eot');
+    src: local('Neulis Extra Bold'), local('Neulis-ExtraBold'),
+        url('Neulis-ExtraBold.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-ExtraBold.woff2') format('woff2'),
+        url('Neulis-ExtraBold.woff') format('woff'),
+        url('Neulis-ExtraBold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-Bold.eot');
+    src: local('Neulis Bold'), local('Neulis-Bold'),
+        url('Neulis-Bold.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-Bold.woff2') format('woff2'),
+        url('Neulis-Bold.woff') format('woff'),
+        url('Neulis-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis Extra';
+    src: url('Neulis-ExtraBoldItalic.eot');
+    src: local('Neulis Extra Bold Italic'), local('Neulis-ExtraBoldItalic'),
+        url('Neulis-ExtraBoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-ExtraBoldItalic.woff2') format('woff2'),
+        url('Neulis-ExtraBoldItalic.woff') format('woff'),
+        url('Neulis-ExtraBoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-BoldItalic.eot');
+    src: local('Neulis Bold Italic'), local('Neulis-BoldItalic'),
+        url('Neulis-BoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-BoldItalic.woff2') format('woff2'),
+        url('Neulis-BoldItalic.woff') format('woff'),
+        url('Neulis-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-ThinItalic.eot');
+    src: local('Neulis Thin Italic'), local('Neulis-ThinItalic'),
+        url('Neulis-ThinItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-ThinItalic.woff2') format('woff2'),
+        url('Neulis-ThinItalic.woff') format('woff'),
+        url('Neulis-ThinItalic.ttf') format('truetype');
+    font-weight: 100;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-Italic.eot');
+    src: local('Neulis Italic'), local('Neulis-Italic'),
+        url('Neulis-Italic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-Italic.woff2') format('woff2'),
+        url('Neulis-Italic.woff') format('woff'),
+        url('Neulis-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-Medium.eot');
+    src: local('Neulis Medium'), local('Neulis-Medium'),
+        url('Neulis-Medium.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-Medium.woff2') format('woff2'),
+        url('Neulis-Medium.woff') format('woff'),
+        url('Neulis-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-Regular.eot');
+    src: local('Neulis'), local('Neulis-Regular'),
+        url('Neulis-Regular.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-Regular.woff2') format('woff2'),
+        url('Neulis-Regular.woff') format('woff'),
+        url('Neulis-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis Semi';
+    src: url('Neulis-SemiBoldItalic.eot');
+    src: local('Neulis Semi Bold Italic'), local('Neulis-SemiBoldItalic'),
+        url('Neulis-SemiBoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-SemiBoldItalic.woff2') format('woff2'),
+        url('Neulis-SemiBoldItalic.woff') format('woff'),
+        url('Neulis-SemiBoldItalic.ttf') format('truetype');
+    font-weight: 600;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-LightItalic.eot');
+    src: local('Neulis Light Italic'), local('Neulis-LightItalic'),
+        url('Neulis-LightItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-LightItalic.woff2') format('woff2'),
+        url('Neulis-LightItalic.woff') format('woff'),
+        url('Neulis-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-Thin.eot');
+    src: local('Neulis Thin'), local('Neulis-Thin'),
+        url('Neulis-Thin.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-Thin.woff2') format('woff2'),
+        url('Neulis-Thin.woff') format('woff'),
+        url('Neulis-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-Light.eot');
+    src: local('Neulis Light'), local('Neulis-Light'),
+        url('Neulis-Light.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-Light.woff2') format('woff2'),
+        url('Neulis-Light.woff') format('woff'),
+        url('Neulis-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis';
+    src: url('Neulis-MediumItalic.eot');
+    src: local('Neulis Medium Italic'), local('Neulis-MediumItalic'),
+        url('Neulis-MediumItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-MediumItalic.woff2') format('woff2'),
+        url('Neulis-MediumItalic.woff') format('woff'),
+        url('Neulis-MediumItalic.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis Extra';
+    src: url('Neulis-ExtraLight.eot');
+    src: local('Neulis Extra Light'), local('Neulis-ExtraLight'),
+        url('Neulis-ExtraLight.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-ExtraLight.woff2') format('woff2'),
+        url('Neulis-ExtraLight.woff') format('woff'),
+        url('Neulis-ExtraLight.ttf') format('truetype');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis Extra';
+    src: url('Neulis-ExtraLightItalic.eot');
+    src: local('Neulis Extra Light Italic'), local('Neulis-ExtraLightItalic'),
+        url('Neulis-ExtraLightItalic.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-ExtraLightItalic.woff2') format('woff2'),
+        url('Neulis-ExtraLightItalic.woff') format('woff'),
+        url('Neulis-ExtraLightItalic.ttf') format('truetype');
+    font-weight: 200;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Neulis Semi';
+    src: url('Neulis-SemiBold.eot');
+    src: local('Neulis Semi Bold'), local('Neulis-SemiBold'),
+        url('Neulis-SemiBold.eot?#iefix') format('embedded-opentype'),
+        url('Neulis-SemiBold.woff2') format('woff2'),
+        url('Neulis-SemiBold.woff') format('woff'),
+        url('Neulis-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
