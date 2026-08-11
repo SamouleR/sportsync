@@ -10,6 +10,11 @@ import authRoutes from './routes/auth.routes.js';
 import usersRoutes from './routes/users.routes.js';
 import eventsRoutes from './routes/events.routes.js';
 import statsRoutes from './routes/stats.routes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import trainingsRoutes from './routes/trainings.routes.js';
 import matchesRoutes from './routes/matches.routes.js';
 import medicalRoutes from './routes/medical.routes.js';
@@ -104,6 +109,14 @@ app.get('/api/health', (req, res) => {
     version: '2.1.0 (WebSockets enabled)',
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// ===========================================
+// ========== STATIC FILES (FRONTEND) ========
+// ===========================================
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Démarrer avec httpServer au lieu de app
