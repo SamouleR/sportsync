@@ -17,18 +17,18 @@
   --text-secondary: #404040;
   --text-muted: #737373;
 
-  /* Brand mapped to Black */
-  --primary: #000000;
-  --primary-light: #525252;
-  --primary-dark: #000000;
-  --accent: #000000;
-  --accent-green: #000000;
-  --accent-red: #000000;
-  --accent-orange: #000000;
+  /* Brand mappings */
+  --primary: #0f172a; /* Dark Blue from SportEasy */
+  --primary-light: #1e293b;
+  --primary-dark: #020617;
+  --accent: #22c55e; /* Green from SportEasy */
+  --accent-green: #22c55e;
+  --accent-red: #ef4444;
+  --accent-orange: #f97316;
 
   /* Borders */
-  --border-color: #E5E5E5;
-  --border-active: #000000;
+  --border-color: #e2e8f0;
+  --border-active: #0f172a;
 
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -127,14 +127,12 @@ h1, h2, h3, h4, h5, h6 {
   gap: 8px;
   padding: 12px 24px;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: 0.85rem;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all var(--transition-fast);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   background: transparent;
   color: var(--text-primary);
 }
@@ -150,8 +148,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary:hover {
-  background: #e0e0e0;
-  border-color: #e0e0e0;
+  background: var(--primary-light);
+  border-color: var(--primary-light);
 }
 
 .btn-ghost {
