@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App.jsx';
-import { getClubName, getUnreadCount } from '../data/store.js';
+import { useNotifications } from '../hooks/useNotifications.js';
 import CoachDashboard from './CoachDashboard.jsx';
 import PlayerDashboard from './PlayerDashboard.jsx';
 import CreateTraining from './CreateTraining.jsx';
@@ -23,8 +23,8 @@ export default function AppShell() {
   const [selectedId, setSelectedId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
-  const clubName = getClubName();
-  const unread = getUnreadCount(user.id);
+  const clubName = "SportSync Club";
+  const { unreadCount: unread } = useNotifications(user.id);
 
   useEffect(() => { setSidebarOpen(false); }, [currentPage]);
 
@@ -90,7 +90,7 @@ export default function AppShell() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F5F2EB] text-[#000000] overflow-hidden">
+    <div className="flex h-screen bg-white text-[#000000] overflow-hidden">
       {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/50 z-[99] md:hidden" />}
 
       {/* Sidebar */}
@@ -170,7 +170,7 @@ export default function AppShell() {
           <div className="flex items-center gap-2">
             <button onClick={() => setShowNotifs(true)} className="relative p-2 rounded-lg text-[#404040] hover:bg-[#E5E5E5]">
               <span className="material-icons-round">notifications</span>
-              {unread > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#F5F2EB]" />}
+              {unread > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />}
             </button>
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm" style={{ background:user.avatarColor, color:'white' }}>{user.avatar}</div>
           </div>

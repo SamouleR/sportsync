@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App.jsx';
-import { getNotifications, markNotificationRead, markAllRead, getUnreadCount } from '../data/store.js';
+import { useNotifications } from '../hooks/useNotifications.js';
 
 export default function NotificationsPanel({ onClose }) {
   const { user } = useAuth();
-  const [notifs, setNotifs] = useState([]);
-  const load = () => setNotifs(getNotifications(user.id));
-  useEffect(load, []);
+  const { notifications: notifs, markRead: handleRead, markAllRead: handleReadAll } = useNotifications(user.id);
 
   const typeIcon = { training:'event', match:'emoji_events', medical:'local_hospital', message:'chat', system:'info' };
   const typeColor = { training:'var(--primary-light)', match:'var(--accent)', medical:'var(--accent-red)', message:'var(--accent-green)', system:'var(--text-secondary)' };
-
-  const handleRead = (id) => { markNotificationRead(id); load(); };
-  const handleReadAll = () => { markAllRead(user.id); load(); };
 
   const timeAgo = (ts) => {
     const diff = Date.now() - new Date(ts).getTime();

@@ -1,25 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { getUpcomingTrainings, getPlayerResponse, setPlayerResponse } from '../data/store.js';
+import { useTrainings } from '../hooks/useTrainings.js';
 
 export default function PlayerDashboard({ onViewTraining }) {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { getUpcoming, respond, loading } = useTrainings(user.team);
   const [trainings, setTrainings] = useState([]);
   const [responses, setResponses] = useState({});
 
-  const loadData = () => {
-    const t = getUpcomingTrainings(user.team);
-    setTrainings(t);
-    const resp = {};
-    t.forEach((tr) => {
-      const r = getPlayerResponse(tr.id, user.id);
-      if (r) resp[tr.id] = r;
-    });
-    setResponses(resp);
-  };
-
-  useEffect(() => { loadData(); }, [user]);
+  useEffect(() => {
+    if (!loading) {
+      const upcoming = getUpcoming();
+      setTrainings(upcoming);
+      // Build responses map from training data
+      const resp = {};
+      upcoming.forEach(tr => {
+        if (tr.responses) {
+          const r = tr.responses.find(r => r.playerId === user.id);
+          if (r) resp[tr.id] = r;
+        }
+      });
+      setResponses(resp);
+    }
+  }, [loading]);
 
   const fmt = (d) => new Date(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   const days = (d) => {
@@ -29,9 +33,8 @@ export default function PlayerDashboard({ onViewTraining }) {
   };
   const greet = () => { const h = new Date().getHours(); return h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir'; };
 
-  const handleRespond = (tid, status, remark = '', arrivalTime = '') => {
-    setPlayerResponse(tid, user.id, status, remark, arrivalTime);
-    loadData();
+  const handleRespond = async (tid, status, remark = '', arrivalTime = '') => {
+    await respond(tid, user.id, status, remark, arrivalTime);
     showToast(`Réponse : ${{present:'Présent',absent:'Absent',late:'En retard'}[status]}`);
   };
 

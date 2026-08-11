@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth, useToast } from '../App.jsx';
-import { updateMatchLineup, getUserById } from '../data/store.js';
+import { useUsers } from '../hooks/useUsers.js';
+import { matchService } from '../services/api.js';
 
 const FIELD_CONFIGS = {
   football: {
@@ -106,6 +107,9 @@ export default function LineupBuilder({ match, sport, format, onClose, onUpdate 
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedFormation, setSelectedFormation] = useState('foot11_442');
 
+  const { users } = useUsers();
+  const getUserById = (id) => users.find(u => u.id === id);
+
   const getActiveFormation = () => {
     if (format === 'foot11') return FORMATIONS[selectedFormation];
     return FORMATIONS[format] || FORMATIONS.foot5;
@@ -114,8 +118,11 @@ export default function LineupBuilder({ match, sport, format, onClose, onUpdate 
   const formation = getActiveFormation();
   const field = FIELD_CONFIGS[sport] || FIELD_CONFIGS.football;
 
-  // List of convocated players
-  const convocatedIds = match.convocations || [];
+  // List of convocated players - parse JSON string if needed
+  let convocatedIds = match.convocations || [];
+  if (typeof convocatedIds === 'string') {
+    try { convocatedIds = JSON.parse(convocatedIds); } catch(e) { convocatedIds = []; }
+  }
   const allAvailablePlayers = convocatedIds.map(id => getUserById(id)).filter(Boolean);
 
   const handleSlotClick = (slotId) => {
@@ -149,7 +156,7 @@ export default function LineupBuilder({ match, sport, format, onClose, onUpdate 
   };
 
   const handleSave = () => {
-    updateMatchLineup(match.id, lineup);
+    matchService.updateLineup(match.id, { lineup });
     showToast('Composition enregistrée !');
     if (onUpdate) onUpdate();
     onClose();

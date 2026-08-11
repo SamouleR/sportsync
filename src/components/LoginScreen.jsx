@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { login } from '../data/store.js';
 
 const SLIDES = [
   { id: 'player', label: 'Joueur', defaultEmail: 'lucas@sportsync.fr', defaultPass: 'joueur123' },
@@ -19,7 +18,7 @@ export default function LoginScreen({ onBack }) {
   const [loading, setLoading] = useState(false);
   const [show2FA, setShow2FA] = useState(false);
   const [code2FA, setCode2FA] = useState('');
-  const [pendingUser, setPendingUser] = useState(null);
+  const [pendingCredentials, setPendingCredentials] = useState(null);
 
   const currentSlide = SLIDES[currentIndex];
 
@@ -39,26 +38,27 @@ export default function LoginScreen({ onBack }) {
     setError('');
   };
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    setError(''); setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
-    const user = login(email, password);
-    if (user) { 
-      setPendingUser(user);
-      setShow2FA(true);
-      showToast(`Un email contenant votre code 2FA a été envoyé à ${user.email}`);
-    } else {
-      setError('Identifiants incorrects');
-    }
-    setLoading(false);
+    setError('');
+    // On simule juste le 2FA ici avant de faire le vrai login
+    setPendingCredentials({ email, password });
+    setShow2FA(true);
+    showToast(`Un email contenant votre code 2FA a été envoyé à ${email}`);
   };
 
-  const handleVerify2FA = (e) => {
+  const handleVerify2FA = async (e) => {
     e.preventDefault();
     if (code2FA.length === 6) {
-      loginUser(pendingUser); 
-      showToast(`Authentification réussie ! Bienvenue, ${pendingUser.name}`);
+      setLoading(true);
+      try {
+        const user = await loginUser(pendingCredentials.email, pendingCredentials.password);
+        showToast(`Authentification réussie ! Bienvenue, ${user.name}`);
+      } catch (err) {
+        setError('Identifiants incorrects ou erreur serveur');
+        setShow2FA(false);
+      }
+      setLoading(false);
     } else {
       setError('Le code 2FA doit contenir 6 chiffres (ex: 123456).');
     }

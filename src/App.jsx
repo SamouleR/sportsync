@@ -7,6 +7,8 @@ import PublicClubPage from './components/PublicClubPage.jsx';
 import PublicFeaturesPage from './components/PublicFeaturesPage.jsx';
 import PublicContactPage from './components/PublicContactPage.jsx';
 
+import { useAuthHook } from './hooks/useAuth.js';
+
 // Auth context
 export const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -16,28 +18,18 @@ export const ToastContext = createContext(null);
 export const useToast = () => useContext(ToastContext);
 
 function App() {
-  const [user, setUser] = useState(null);
+  const { user, login: apiLogin, logout: apiLogout, loading } = useAuthHook();
   const [toastMsg, setToastMsg] = useState(null);
   const [toastVisible, setToastVisible] = useState(false);
-  const [unauthView, setUnauthView] = useState('landing'); // 'landing', 'login', 'live'
+  const [unauthView, setUnauthView] = useState('landing');
 
-  // Persist session
-  useEffect(() => {
-    const saved = sessionStorage.getItem('sportsync_session');
-    if (saved) {
-      setUser(JSON.parse(saved));
-    }
-  }, []);
-
-  const loginUser = (userData) => {
-    setUser(userData);
-    sessionStorage.setItem('sportsync_session', JSON.stringify(userData));
+  const loginUser = async (email, password) => {
+    return await apiLogin(email, password);
   };
 
   const logoutUser = () => {
-    setUser(null);
+    apiLogout();
     setUnauthView('landing');
-    sessionStorage.removeItem('sportsync_session');
   };
 
   const showToast = (message, icon = 'check_circle') => {
@@ -63,6 +55,8 @@ function App() {
         return <LandingPage onNavigate={setUnauthView} currentView={unauthView} onLoginClick={() => setUnauthView('login')} />;
     }
   };
+
+  if (loading) return <div>Chargement...</div>;
 
   return (
     <AuthContext.Provider value={{ user, loginUser, logoutUser }}>

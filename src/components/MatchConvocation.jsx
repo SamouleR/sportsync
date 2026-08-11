@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { getUpcomingMatches, getMatchById, createMatch, deleteMatch, updateMatchConvocations, setConvocationResponse, getPlayers, getUserById, getPlayerAttendanceRate, getActiveInjuries, getLocations, getClubConfig } from '../data/store.js';
+import { useMatches } from '../hooks/useMatches.js';
+import { useUsers } from '../hooks/useUsers.js';
+import { useMedical } from '../hooks/useMedical.js';
+import { DEFAULT_CLUB_CONFIG, LOCATIONS } from '../data/constants.js';
 import LineupBuilder from './LineupBuilder.jsx';
 
 export default function MatchConvocation({ onViewMatch }) {
@@ -8,22 +11,21 @@ export default function MatchConvocation({ onViewMatch }) {
   const { showToast } = useToast();
   const isCoach = user.role === 'coach' || user.role === 'admin';
   const isParent = user.role === 'parent';
-  const [matches, setMatches] = useState([]);
+  
+  const { getUpcoming, create, loading: matchesLoading } = useMatches(user.team);
+  
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ title:'', date:'', startTime:'', endTime:'', location:'', opponent:'', type:'domicile' });
-  const locations = getLocations();
 
-  const load = () => setMatches(getUpcomingMatches(user.team));
-  useEffect(load, []);
+  const matches = matchesLoading ? [] : getUpcoming();
 
   const up = (k,v) => setForm(p => ({...p,[k]:v}));
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    createMatch({ ...form, team:user.team, createdBy:user.id });
+    await create({ ...form, team:user.team, createdBy:user.id });
     showToast('Match créé !');
     setShowCreate(false);
     setForm({ title:'', date:'', startTime:'', endTime:'', location:'', opponent:'', type:'domicile' });
-    load();
   };
 
   const fmt = d => new Date(d).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
@@ -64,7 +66,7 @@ export default function MatchConvocation({ onViewMatch }) {
             <div><label className="input-label">Lieu</label>
               <select className="select-field" value={form.location} onChange={e=>up('location',e.target.value)}>
                 <option value="">Sélectionner...</option>
-                {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
           </div>
@@ -72,7 +74,6 @@ export default function MatchConvocation({ onViewMatch }) {
         </form>
       )}
 
-      {/* Match cards */}
       <div className="stagger" style={{ display:'flex', flexDirection:'column', gap:14 }}>
         {matches.length === 0 && (
           <div className="glass-card" style={{ padding:48, textAlign:'center' }}>
@@ -81,44 +82,62 @@ export default function MatchConvocation({ onViewMatch }) {
           </div>
         )}
         {matches.map(m => (
-          <MatchCard key={m.id} match={m} isCoach={isCoach} isParent={isParent} user={user} fmt={fmt} onUpdate={load} showToast={showToast} onView={() => onViewMatch && onViewMatch(m.id)} />
+          <MatchCard key={m.id} match={m} isCoach={isCoach} isParent={isParent} user={user} fmt={fmt} showToast={showToast} onView={() => onViewMatch && onViewMatch(m.id)} />
         ))}
       </div>
     </div>
   );
 }
 
-function MatchCard({ match, isCoach, isParent, user, fmt, onUpdate, showToast, onView }) {
+function MatchCard({ match, isCoach, isParent, user, fmt, showToast, onView }) {
   const [expanded, setExpanded] = useState(false);
   const [showTactics, setShowTactics] = useState(false);
-  const clubConfig = getClubConfig();
+  
+  const clubConfig = DEFAULT_CLUB_CONFIG;
+  const { users, getPlayers } = useUsers();
+  const { reports } = useMedical({ team: match.team });
+  const { remove, updateConvocations } = useMatches(user.team);
+
   const players = getPlayers(match.team);
-  const injuries = getActiveInjuries(match.team);
-  const injuredIds = injuries.map(i => i.playerId);
-  const isConvoked = match.convocations?.includes(user.id);
-  const myStatus = match.convocationStatus?.[user.id];
+  const injuredIds = reports.filter(r => r.status === 'actif').map(i => i.playerId);
+  
+  let convocatedIds = match.convocations || [];
+  if (typeof convocatedIds === 'string') {
+    try { convocatedIds = JSON.parse(convocatedIds); } catch(e) { convocatedIds = []; }
+  }
+  let convStatus = match.convocationStatus || {};
+  if (typeof convStatus === 'string') {
+    try { convStatus = JSON.parse(convStatus); } catch(e) { convStatus = {}; }
+  }
 
-  // For parents
-  const childId = isParent ? user.children?.find(id => match.convocations?.includes(id)) : null;
-  const child = childId ? getUserById(childId) : null;
-  const childStatus = childId ? match.convocationStatus?.[childId] : null;
+  const isConvoked = convocatedIds.includes(user.id);
+  const myStatus = convStatus[user.id];
 
-  const togglePlayer = (pid) => {
-    const current = match.convocations || [];
-    const updated = current.includes(pid) ? current.filter(id => id !== pid) : [...current, pid];
-    updateMatchConvocations(match.id, updated);
-    onUpdate();
+  const childId = isParent ? user.children?.find(id => convocatedIds.includes(id)) : null;
+  const child = childId ? users.find(u => u.id === childId) : null;
+  const childStatus = childId ? convStatus[childId] : null;
+
+  const togglePlayer = async (pid) => {
+    const updated = convocatedIds.includes(pid) ? convocatedIds.filter(id => id !== pid) : [...convocatedIds, pid];
+    await updateConvocations(match.id, updated, convStatus);
   };
 
-  const respond = (status, pid = user.id) => {
-    setConvocationResponse(match.id, pid, status);
+  const respond = async (status, pid = user.id) => {
+    const newStatus = { ...convStatus, [pid]: status };
+    await updateConvocations(match.id, convocatedIds, newStatus);
     showToast(`Réponse : ${status === 'accepté' ? 'Accepté' : 'Décliné'}`);
-    onUpdate();
   };
 
-  const handleDelete = () => {
-    if (confirm('Supprimer ce match ?')) { deleteMatch(match.id); showToast('Match supprimé','delete'); onUpdate(); }
+  const handleDelete = async () => {
+    if (confirm('Supprimer ce match ?')) { 
+      await remove(match.id); 
+      showToast('Match supprimé','delete'); 
+    }
   };
+
+  const getUserById = (id) => users.find(u => u.id === id);
+  // Fake attendance since backend doesn't support it yet
+  const getPlayerAttendanceRate = (pid) => 85;
 
   return (
     <div className="glass-card card-enter" style={{ padding:22 }}>
@@ -140,21 +159,19 @@ function MatchCard({ match, isCoach, isParent, user, fmt, onUpdate, showToast, o
           </div>
       </div>
 
-      {/* Convocation count */}
       <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12, fontSize:'0.85rem' }}>
-        <span style={{ color:'var(--text-secondary)' }}>Convoqués : <strong style={{ color:'var(--text-primary)' }}>{(match.convocations||[]).length}</strong> / {players.length}</span>
-        {(match.convocations||[]).length > 0 && (
+        <span style={{ color:'var(--text-secondary)' }}>Convoqués : <strong style={{ color:'var(--text-primary)' }}>{convocatedIds.length}</strong> / {players.length}</span>
+        {convocatedIds.length > 0 && (
           <div style={{ display:'flex' }}>
-            {(match.convocations||[]).slice(0,6).map(pid => {
+            {convocatedIds.slice(0,6).map(pid => {
               const p = getUserById(pid);
               return p ? <div key={pid} className="avatar avatar-sm" style={{ background: p.photoUrl ? `url(${p.photoUrl}) center/cover` : p.avatarColor, color:'white', marginLeft:-6, border:'2px solid var(--bg-card)', fontSize:'0.6rem' }}>{!p.photoUrl && p.avatar}</div> : null;
             })}
-            {(match.convocations||[]).length > 6 && <div className="avatar avatar-sm" style={{ background:'var(--bg-elevated)', color:'var(--text-muted)', marginLeft:-6, border:'2px solid var(--bg-card)', fontSize:'0.6rem' }}>+{(match.convocations||[]).length-6}</div>}
+            {convocatedIds.length > 6 && <div className="avatar avatar-sm" style={{ background:'var(--bg-elevated)', color:'var(--text-muted)', marginLeft:-6, border:'2px solid var(--bg-card)', fontSize:'0.6rem' }}>+{convocatedIds.length-6}</div>}
           </div>
         )}
       </div>
 
-      {/* Player response (if not coach) */}
       {!isCoach && !isParent && isConvoked && (
         <div style={{ padding:14, background:'var(--bg-elevated)', borderRadius:'var(--radius-md)', marginBottom:12, border:'1px solid var(--border-color)' }}>
           <p style={{ fontSize:'0.85rem', fontWeight:600, marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
@@ -168,7 +185,6 @@ function MatchCard({ match, isCoach, isParent, user, fmt, onUpdate, showToast, o
         </div>
       )}
 
-      {/* Parent response */}
       {isParent && childId && (
         <div style={{ padding:14, background:'var(--bg-elevated)', borderRadius:'var(--radius-md)', marginBottom:12, border:'1px solid var(--border-color)' }}>
           <p style={{ fontSize:'0.85rem', fontWeight:600, marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
@@ -182,7 +198,6 @@ function MatchCard({ match, isCoach, isParent, user, fmt, onUpdate, showToast, o
         </div>
       )}
 
-      {/* Coach: expand to manage convocations */}
       {isCoach && (
         <div style={{ display:'flex', gap:8, marginBottom: expanded?12:0 }}>
           <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(!expanded)}>
@@ -202,7 +217,6 @@ function MatchCard({ match, isCoach, isParent, user, fmt, onUpdate, showToast, o
           sport={clubConfig.sport} 
           format={clubConfig.format} 
           onClose={() => setShowTactics(false)} 
-          onUpdate={onUpdate} 
         />
       )}
 
@@ -210,10 +224,10 @@ function MatchCard({ match, isCoach, isParent, user, fmt, onUpdate, showToast, o
         <div style={{ borderTop:'1px solid var(--border-color)', paddingTop:16 }}>
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
             {players.map(p => {
-              const isSelected = (match.convocations||[]).includes(p.id);
+              const isSelected = convocatedIds.includes(p.id);
               const isInjured = injuredIds.includes(p.id);
-              const attendance = getPlayerAttendanceRate(p.id, match.team);
-              const cStatus = match.convocationStatus?.[p.id];
+              const attendance = getPlayerAttendanceRate(p.id);
+              const cStatus = convStatus[p.id];
               return (
                 <div key={p.id} onClick={() => !isInjured && togglePlayer(p.id)} style={{
                   display:'flex', alignItems:'center', gap:12, padding:'10px 14px',

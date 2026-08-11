@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { getTrainingById, getResponsesForTraining, getPlayers, getTrainingStats, getUserById, deleteTraining, getMessagesForTraining, sendMessage, downloadICS, getGoogleCalendarUrl } from '../data/store.js';
+import { useTrainings } from '../hooks/useTrainings.js';
+import { useUsers } from '../hooks/useUsers.js';
 
 export default function TrainingDetail({ trainingId, onBack }) {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { trainings, getById, getStats, remove, sendMessage: sendMsg, loading: trainingsLoading } = useTrainings(user.team);
+  const { users, getPlayers, loading: usersLoading } = useUsers();
+  
   const [training, setTraining] = useState(null);
   const [responses, setResponses] = useState([]);
   const [players, setPlayers] = useState([]);
@@ -16,22 +20,44 @@ export default function TrainingDetail({ trainingId, onBack }) {
   const chatRef = useRef(null);
   const isStaff = user.role === 'coach' || user.role === 'admin';
 
-  const load = () => {
-    const t = getTrainingById(trainingId);
-    if (!t) return;
-    setTraining(t); setResponses(getResponsesForTraining(trainingId));
-    setPlayers(getPlayers(t.team)); setStats(getTrainingStats(trainingId, t.team));
-    setMessages(getMessagesForTraining(trainingId));
-  };
-  useEffect(() => { load(); }, [trainingId]);
+  useEffect(() => {
+    if (!trainingsLoading && !usersLoading) {
+      const t = getById(trainingId);
+      if (!t) return;
+      setTraining(t);
+      setResponses(t.responses || []);
+      const teamPlayers = getPlayers(t.team);
+      setPlayers(teamPlayers);
+      setStats(getStats(trainingId, teamPlayers));
+      setMessages(t.messages || []);
+    }
+  }, [trainingId, trainingsLoading, usersLoading, trainings]);
+  
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages]);
 
   if (!training) return <div className="page-enter"><p>Chargement...</p></div>;
 
   const fmt = d => new Date(d).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  const handleDelete = () => { if (confirm('Supprimer ?')) { deleteTraining(trainingId); showToast('Supprimé','delete'); onBack(); } };
-  const handleSend = (e) => { e.preventDefault(); if (!newMsg.trim()) return; sendMessage(trainingId, user.id, newMsg.trim()); setNewMsg(''); load(); };
-  const getP = pid => getUserById(pid) || { name:'Inconnu', avatar:'?', avatarColor:'#666' };
+  const handleDelete = async () => { if (confirm('Supprimer ?')) { await remove(trainingId); showToast('Supprimé','delete'); onBack(); } };
+  const handleSend = async (e) => { e.preventDefault(); if (!newMsg.trim()) return; await sendMsg(trainingId, user.id, newMsg.trim()); setNewMsg(''); };
+  const getP = pid => {
+    const found = users.find(u => u.id === pid);
+    return found || { name:'Inconnu', avatar:'?', avatarColor:'#666' };
+  };
+
+  // Generate ICS content for calendar export
+  const downloadICS = (t) => {
+    const ics = `BEGIN:VCALENDAR\nBEGIN:VEVENT\nDTSTART:${t.date.replace(/-/g, '')}T${t.startTime.replace(':', '')}00\nDTEND:${t.date.replace(/-/g, '')}T${t.endTime.replace(':', '')}00\nSUMMARY:${t.title}\nLOCATION:${t.location}\nEND:VEVENT\nEND:VCALENDAR`;
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${t.title}.ics`; a.click();
+  };
+
+  const getGoogleCalendarUrl = (t) => {
+    const start = `${t.date.replace(/-/g, '')}T${t.startTime.replace(':', '')}00`;
+    const end = `${t.date.replace(/-/g, '')}T${t.endTime.replace(':', '')}00`;
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&dates=${start}/${end}&location=${encodeURIComponent(t.location)}`;
+  };
 
   const respondedIds = responses.map(r => r.playerId);
   const pending = players.filter(p => !respondedIds.includes(p.id));
@@ -158,7 +184,7 @@ export default function TrainingDetail({ trainingId, onBack }) {
                 <p>Aucun message. Démarrez la discussion !</p>
               </div>
             ) : messages.map(m => {
-              const u = getUserById(m.userId); const mine = m.userId === user.id;
+              const u = m.user || getP(m.userId); const mine = m.userId === user.id;
               return (
                 <div key={m.id} className={`flex gap-2 items-end ${mine ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background:u?.avatarColor||'#666', color:'white' }}>{u?.avatar||'?'}</div>

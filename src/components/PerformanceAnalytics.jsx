@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import { getPlayers } from '../data/store.js';
+import { useUsers } from '../hooks/useUsers.js';
 
 export default function PerformanceAnalytics({ team }) {
-  const players = getPlayers(team);
-  const [selectedPlayer, setSelectedPlayer] = useState(players[0] || null);
+  const { getPlayers, loading } = useUsers();
+  const players = loading ? [] : getPlayers(team);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+  // Auto-select first player once loaded
+  if (!selectedPlayer && players.length > 0) {
+    setSelectedPlayer(players[0]);
+  }
 
   // Simple SVG Radar Chart
   const drawRadar = (stats) => {
@@ -14,7 +20,6 @@ export default function PerformanceAnalytics({ team }) {
     const angles = attributes.map((_, i) => (Math.PI * 2 * i) / attributes.length - Math.PI / 2);
 
     const getPoint = (val, angle) => {
-      // Normalize values (assuming max is 100, form is max 10 so * 10)
       const normalized = val <= 10 ? val * 10 : val;
       const r = (normalized / 100) * radius;
       return `${center + r * Math.cos(angle)},${center + r * Math.sin(angle)}`;
@@ -24,7 +29,6 @@ export default function PerformanceAnalytics({ team }) {
 
     return (
       <svg width="200" height="200" viewBox="0 0 200 200" style={{ overflow: 'visible' }}>
-        {/* Web grid */}
         {[0.2, 0.4, 0.6, 0.8, 1].map((scale, idx) => (
           <polygon
             key={`grid-${idx}`}
@@ -34,13 +38,10 @@ export default function PerformanceAnalytics({ team }) {
             strokeWidth="1"
           />
         ))}
-        {/* Axes */}
         {angles.map((angle, i) => (
           <line key={`axis-${i}`} x1={center} y1={center} x2={center + radius * Math.cos(angle)} y2={center + radius * Math.sin(angle)} stroke="var(--border-color)" strokeWidth="1" />
         ))}
-        {/* Data polygon */}
         <polygon points={points} fill="rgba(0,0,0,0.1)" stroke="var(--text-primary)" strokeWidth="2" />
-        {/* Labels */}
         {attributes.map((attr, i) => (
           <text key={`label-${i}`} x={center + (radius + 20) * Math.cos(angles[i])} y={center + (radius + 20) * Math.sin(angles[i])} fontSize="10" fill="var(--text-secondary)" textAnchor="middle" dominantBaseline="middle" style={{ textTransform: 'uppercase', fontWeight: 600 }}>
             {attr}
@@ -93,7 +94,8 @@ export default function PerformanceAnalytics({ team }) {
 
               {/* Stats Bars */}
               <div style={{ flex: 1, minWidth: 250, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {Object.entries(selectedPlayer.stats).map(([key, val]) => {
+                {Object.entries(selectedPlayer.stats).filter(([key]) => !['id', 'userId'].includes(key)).map(([key, val]) => {
+                  if (val === null || val === undefined) return null;
                   const normalized = val <= 10 ? val * 10 : val;
                   return (
                     <div key={key}>

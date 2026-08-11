@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { SPORTS_CONFIG, getClubConfig, setClubConfig, getClubName, getCurrentFormatConfig, getPlayers } from '../data/store.js';
+import { useUsers } from '../hooks/useUsers.js';
+import { SPORTS_CONFIG, DEFAULT_CLUB_CONFIG } from '../data/constants.js';
 
 export default function SportConfig() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [config, setConfig] = useState(getClubConfig());
+  
+  const [config, setConfig] = useState(() => {
+    const saved = localStorage.getItem('sportsync_club_config');
+    return saved ? JSON.parse(saved) : DEFAULT_CLUB_CONFIG;
+  });
+  
   const [saved, setSaved] = useState(true);
-  const clubName = getClubName();
-  const players = getPlayers(user.team);
+  const clubName = "SportSync Club"; // We removed this from store, it's just a default now
+  const { getPlayers, loading } = useUsers();
+  const players = loading ? [] : getPlayers(user.team);
 
   const sportData = SPORTS_CONFIG[config.sport];
   const formatData = sportData?.formats[config.format];
@@ -25,7 +32,7 @@ export default function SportConfig() {
   };
 
   const handleSave = () => {
-    setClubConfig(config.sport, config.format);
+    localStorage.setItem('sportsync_club_config', JSON.stringify(config));
     showToast('Configuration sportive enregistrée !');
     setSaved(true);
   };

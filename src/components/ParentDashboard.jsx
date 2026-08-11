@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { getPlayers, getUserById } from '../data/store.js';
+import { useUsers } from '../hooks/useUsers.js';
 
 export default function ParentDashboard() {
   const { user } = useAuth();
@@ -11,7 +11,8 @@ export default function ParentDashboard() {
   const [activeChild, setActiveChild] = useState(childrenIds[0] || null);
   const [tab, setTab] = useState('covoiturage');
 
-  const childrenData = childrenIds.map(id => getUserById(id)).filter(Boolean);
+  const { users } = useUsers();
+  const childrenData = childrenIds.map(id => users.find(u => u.id === id)).filter(Boolean);
   const selectedChild = childrenData.find(c => c.id === activeChild);
 
   const [carpoolForm, setCarpoolForm] = useState({ seats: 0, needRide: false, remark: '' });

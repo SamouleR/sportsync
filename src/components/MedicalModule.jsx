@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { getMedicalReports, getMedicalReportsForPlayer, addMedicalReport, updateMedicalReport, getPlayers, getUserById } from '../data/store.js';
+import { useMedical } from '../hooks/useMedical.js';
+import { useUsers } from '../hooks/useUsers.js';
 
 const ZONES = ['Tête','Épaule','Bras','Coude','Poignet','Main','Dos','Hanche','Cuisse','Genou','Tibia','Cheville','Pied','Autre'];
 const TYPES = ['blessure','gêne','maladie','indisponibilité'];
@@ -10,34 +11,30 @@ export default function MedicalModule() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const isCoach = user.role === 'coach' || user.role === 'admin';
-  const [reports, setReports] = useState([]);
+  
+  const medicalParams = isCoach ? { team: user.team } : { playerId: user.id };
+  const { reports, create: createReport, markHealed, refresh } = useMedical(medicalParams);
+  const { getPlayers } = useUsers();
+  
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState('actif');
   const [form, setForm] = useState({ playerId: user.id, type:'gêne', zone:'', severity:'légère', description:'', startDate:'', estimatedReturn:'', status:'actif' });
-
-  const load = () => {
-    if (isCoach) setReports(getMedicalReports(user.team));
-    else setReports(getMedicalReportsForPlayer(user.id));
-  };
-  useEffect(load, []);
 
   const players = isCoach ? getPlayers(user.team) : [];
   const filtered = reports.filter(r => filter === 'tous' || r.status === filter);
   const up = (k,v) => setForm(p => ({...p,[k]:v}));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    addMedicalReport({ ...form, playerId: isCoach ? form.playerId : user.id });
+    await createReport({ ...form, playerId: isCoach ? form.playerId : user.id });
     showToast('Signalement médical enregistré', 'medical_services');
     setShowForm(false);
     setForm({ playerId: user.id, type:'gêne', zone:'', severity:'légère', description:'', startDate:'', estimatedReturn:'', status:'actif' });
-    load();
   };
 
-  const resolve = (id) => {
-    updateMedicalReport(id, { status:'guéri' });
+  const resolve = async (id) => {
+    await markHealed(id);
     showToast('Marqué comme guéri', 'check_circle');
-    load();
   };
 
   const sevColor = { 'légère':'var(--accent-orange)', 'modérée':'#FF6D00', 'grave':'var(--accent-red)' };
@@ -127,7 +124,7 @@ export default function MedicalModule() {
           </div>
         )}
         {filtered.map((r, i) => {
-          const p = getUserById(r.playerId);
+          const p = r.player || null;
           return (
             <div key={r.id} className="glass-card card-enter" style={{ padding:'18px 22px', animationDelay:`${i*50}ms` }}>
               <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:12 }}>

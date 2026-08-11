@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { getUpcomingMatches, getUserById, updateMatchLiveState, updateUserStats, closeMatch } from '../data/store.js';
+import { useEvents } from '../hooks/useEvents.js';
+import { useUsers } from '../hooks/useUsers.js';
+import { eventService, statsService } from '../services/api.js';
 
 export default function MatchLiveTracker() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const matches = getUpcomingMatches(user.team);
+  const { matches: allMatches, refresh: refreshEvents } = useEvents();
+  const { users } = useUsers();
   
+  // Get upcoming matches (could move this logic to useEvents similar to getUpcomingTrainings)
+  const matches = allMatches.filter(m => (!user.team || m.team === user.team) && (!m.liveState || !JSON.parse(m.liveState).isClosed));
+  
+  const getUserById = (id) => users.find(u => u.id === id);
+
   const [activeMatch, setActiveMatch] = useState(null);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -40,15 +48,22 @@ export default function MatchLiveTracker() {
 
   // Sync state to store whenever it changes
   useEffect(() => {
-    if (activeMatch) {
-      updateMatchLiveState(activeMatch.id, {
-        time,
-        isRunning,
-        events,
-        scoreHome,
-        scoreAway
-      });
-    }
+    const updateLiveState = async () => {
+      if (activeMatch) {
+        try {
+          await eventService.updateMatchLiveState(activeMatch.id, {
+            time,
+            isRunning,
+            events,
+            scoreHome,
+            scoreAway
+          });
+        } catch (error) {
+          console.error("Failed to update live state", error);
+        }
+      }
+    };
+    updateLiveState();
   }, [time, isRunning, events, scoreHome, scoreAway, activeMatch]);
 
   useEffect(() => {
@@ -90,12 +105,19 @@ export default function MatchLiveTracker() {
 
   const startTracking = (m) => {
     setActiveMatch(m);
-    if (m.liveState) {
-      setTime(m.liveState.time || 0);
-      setIsRunning(m.liveState.isRunning || false);
-      setEvents(m.liveState.events || []);
-      setScoreHome(m.liveState.scoreHome || 0);
-      setScoreAway(m.liveState.scoreAway || 0);
+    let parsedState = {};
+    if (m.liveState && typeof m.liveState === 'string') {
+      try { parsedState = JSON.parse(m.liveState); } catch(e){}
+    } else if (m.liveState) {
+      parsedState = m.liveState;
+    }
+    
+    if (parsedState) {
+      setTime(parsedState.time || 0);
+      setIsRunning(parsedState.isRunning || false);
+      setEvents(parsedState.events || []);
+      setScoreHome(parsedState.scoreHome || 0);
+      setScoreAway(parsedState.scoreAway || 0);
     } else {
       setTime(0);
       setIsRunning(false);
@@ -105,23 +127,42 @@ export default function MatchLiveTracker() {
     }
   };
 
-  const handleCloseMatch = () => {
+  const handleCloseMatch = async () => {
     if (window.confirm("Voulez-vous clôturer ce match ? Cela recalculera la note (Rating) et la forme des joueurs ayant participé.")) {
       setIsRunning(false);
       
       // Update player stats
-      const lineupIds = activeMatch.lineup ? Object.values(activeMatch.lineup) : [];
-      lineupIds.forEach(playerId => {
+      let parsedLineup = {};
+      if (activeMatch.lineup && typeof activeMatch.lineup === 'string') {
+        try { parsedLineup = JSON.parse(activeMatch.lineup); } catch(e){}
+      } else if (activeMatch.lineup) {
+        parsedLineup = activeMatch.lineup;
+      }
+      
+      const lineupIds = Object.values(parsedLineup);
+      for (const playerId of lineupIds) {
         const player = getUserById(playerId);
         if (player) {
           const playerEvents = events.filter(e => e.player === player.name);
-          updateUserStats(playerId, playerEvents);
+          // Just a mock stat update calculation based on events
+          let formModifier = 0;
+          playerEvents.forEach(e => {
+            if (e.type === 'BUT') formModifier += 1;
+            if (e.type === 'PASSE D.') formModifier += 0.5;
+            if (e.type === 'CARTON J.') formModifier -= 0.5;
+            if (e.type === 'CARTON R.') formModifier -= 2;
+          });
+          
+          await statsService.updateUserStats(playerId, {
+            form: (player.stats?.form || 7.0) + formModifier
+          });
         }
-      });
+      }
 
-      closeMatch(activeMatch.id);
+      await eventService.closeMatch(activeMatch.id);
       showToast('Match clôturé ! Statistiques des joueurs mises à jour.', 'success');
       setActiveMatch(null);
+      refreshEvents();
     }
   };
 

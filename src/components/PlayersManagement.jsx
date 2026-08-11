@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { getPlayers, addPlayer, removePlayer, getTeams } from '../data/store.js';
+import { useUsers } from '../hooks/useUsers.js';
+import { userService, statsService } from '../services/api.js';
 
 export default function PlayersManagement() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { users, getPlayers, refresh, loading } = useUsers();
   const [players, setPlayers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
@@ -14,31 +16,34 @@ export default function PlayersManagement() {
   const [editStats, setEditStats] = useState({ rating: 70, form: 7.0 });
   const [coachComment, setCoachComment] = useState('');
 
-  const load = () => setPlayers(getPlayers(user.team));
-  useEffect(() => { load(); }, [user.team]);
+  useEffect(() => {
+    if (!loading) setPlayers(getPlayers(user.team));
+  }, [user.team, loading, users]);
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!newName.trim() || !newEmail.trim()) return;
-    addPlayer({ name: newName.trim(), email: newEmail.trim(), team: user.team });
-    setNewName('');
-    setNewEmail('');
-    setShowAdd(false);
-    load();
-    showToast('Joueur ajouté !');
+    try {
+      await userService.create({ name: newName.trim(), email: newEmail.trim(), team: user.team, role: 'player' });
+      setNewName(''); setNewEmail(''); setShowAdd(false);
+      await refresh();
+      showToast('Joueur ajouté !');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   };
 
-  const handleRemove = (id, name) => {
+  const handleRemove = async (id, name) => {
     if (confirm(`Retirer ${name} de l'effectif ?`)) {
-      removePlayer(id);
-      load();
+      await userService.delete(id);
+      await refresh();
       showToast('Joueur retiré', 'person_remove');
     }
   };
 
   const filtered = players.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.email.toLowerCase().includes(search.toLowerCase())
+    (p.email && p.email.toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleOpenPlayer = (p) => {
@@ -47,17 +52,19 @@ export default function PlayersManagement() {
     setCoachComment(p.coachComment || '');
   };
 
-  const handleSavePlayer = () => {
+  const handleSavePlayer = async () => {
     if (!selectedPlayer) return;
-    import('../data/store.js').then(module => {
-      module.updateUser(selectedPlayer.id, {
-        stats: { ...selectedPlayer.stats, rating: Number(editStats.rating), form: Number(editStats.form) },
-        coachComment: coachComment
+    try {
+      await userService.update(selectedPlayer.id, {
+        coachComment,
+        stats: { rating: Number(editStats.rating), form: Number(editStats.form) }
       });
-      load();
+      await refresh();
       setSelectedPlayer(null);
       showToast('Fiche joueur mise à jour');
-    });
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   };
 
   return (
@@ -114,7 +121,7 @@ export default function PlayersManagement() {
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{p.name}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 4 }}>{p.category || 'Senior'} • {p.level || 'Régional'}</div>
-              {p.medicalCert?.status === 'Manquant' && <span className="badge badge-danger" style={{ fontSize: '0.65rem', display: 'inline-block' }}>CERTIFICAT MANQUANT</span>}
+              {p.medicalStatus === 'Manquant' && <span className="badge badge-danger" style={{ fontSize: '0.65rem', display: 'inline-block' }}>CERTIFICAT MANQUANT</span>}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>{p.stats?.rating || '-'}</div>
@@ -163,11 +170,11 @@ export default function PlayersManagement() {
             <div>
               <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>Certificat Médical</span>
-                <span className={`badge ${selectedPlayer.medicalCert?.status === 'Validé' ? 'badge-success' : 'badge-danger'}`}>
-                  {selectedPlayer.medicalCert?.status || 'Manquant'}
+                <span className={`badge ${selectedPlayer.medicalStatus === 'Validé' ? 'badge-success' : 'badge-danger'}`}>
+                  {selectedPlayer.medicalStatus || 'Manquant'}
                 </span>
               </label>
-              {selectedPlayer.medicalCert?.status === 'Manquant' && (
+              {selectedPlayer.medicalStatus === 'Manquant' && (
                 <p style={{ fontSize: '0.8rem', color: 'var(--accent-red)', margin: '4px 0 0 0' }}>Rappel : Le joueur ne peut pas participer aux matchs officiels.</p>
               )}
             </div>

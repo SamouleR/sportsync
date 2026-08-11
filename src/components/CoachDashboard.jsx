@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App.jsx';
-import {
-  getUpcomingTrainings,
-  getTrainingStats,
-  getPlayers,
-  getClubName,
-} from '../data/store.js';
+import { useEvents } from '../hooks/useEvents.js';
+import { useUsers } from '../hooks/useUsers.js';
 
 export default function CoachDashboard({ onViewTraining, onCreateTraining }) {
   const { user } = useAuth();
+  const { getUpcomingTrainings, getTrainingStats, loading: eventsLoading } = useEvents();
+  const { getPlayers, loading: usersLoading } = useUsers();
+  
   const [trainings, setTrainings] = useState([]);
   const [players, setPlayers] = useState([]);
-  const clubName = getClubName();
+  // Stubbing club name for now until club config is moved to API
+  const clubName = "SportSync Club";
 
   useEffect(() => {
-    setTrainings(getUpcomingTrainings(user.team));
-    setPlayers(getPlayers(user.team));
-  }, [user.team]);
+    if (!eventsLoading && !usersLoading) {
+      setTrainings(getUpcomingTrainings(user.team));
+      setPlayers(getPlayers(user.team));
+    }
+  }, [user.team, eventsLoading, usersLoading]);
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);

@@ -1,18 +1,25 @@
 import { useState } from 'react';
 import { useAuth, useToast } from '../App.jsx';
-import { createTraining, getLocations } from '../data/store.js';
+import { useTrainings } from '../hooks/useTrainings.js';
+
+const LOCATIONS = [
+  'Terrain synthétique principal',
+  'Gymnase municipal',
+  'Stade André Lemoine',
+  'Terrain annexe B',
+];
 
 export default function CreateTraining({ onBack }) {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const locations = getLocations();
+  const { create } = useTrainings(user.team);
 
   const [form, setForm] = useState({
     title: '',
     date: '',
     startTime: '',
     endTime: '',
-    location: locations[0],
+    location: LOCATIONS[0],
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -22,11 +29,14 @@ export default function CreateTraining({ onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 600));
-    createTraining({ ...form, team: user.team, createdBy: user.id });
-    showToast('Entraînement créé avec succès !');
+    try {
+      await create({ ...form, team: user.team, createdBy: user.id });
+      showToast('Entraînement créé avec succès !');
+      onBack();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
     setSubmitting(false);
-    onBack();
   };
 
   return (
@@ -75,7 +85,7 @@ export default function CreateTraining({ onBack }) {
           <div style={{ marginBottom: 20 }}>
             <label className="input-label" htmlFor="training-location">Lieu</label>
             <select id="training-location" className="select-field" value={form.location} onChange={e => update('location', e.target.value)}>
-              {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+              {LOCATIONS.map(loc => <option key={loc} value={loc}>{loc}</option>)}
             </select>
           </div>
 

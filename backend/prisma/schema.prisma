@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String  @id @default(uuid())
+  name         String
+  email        String  @unique
+  password     String
+  role         String  // "admin", "coach", "player", "parent"
+  team         String?
+  avatar       String?
+  avatarColor  String?
+  
+  // Specific to players
+  category     String?
+  level        String?
+  position     String?
+  photoUrl     String?
+  coachComment String?
+  medicalStatus String? @default("Manquant")
+
+  // Relations
+  stats             UserStats?
+  responses         TrainingResponse[]
+  messages          Message[]
+  medicalReports    MedicalReport[]
+  createdTrainings  Training[]         @relation("TrainingCreator")
+  notifications     Notification[]
+}
+
+model UserStats {
+  id        String @id @default(uuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Float  @default(70)
+  stamina   Float  @default(99)
+  form      Float  @default(7.0)
+  pace      Float?
+  passing   Float?
+  shooting  Float?
+  defense   Float?
+}
+
+model Training {
+  id          String   @id @default(uuid())
+  title       String
+  date        String
+  startTime   String
+  endTime     String
+  location    String
+  message     String?
+  team        String
+  createdBy   String
+  creator     User     @relation("TrainingCreator", fields: [createdBy], references: [id])
+  createdAt   DateTime @default(now())
+
+  responses   TrainingResponse[]
+  messages    Message[]
+}
+
+model TrainingResponse {
+  id          String   @id @default(uuid())
+  trainingId  String
+  training    Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  playerId    String
+  player      User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  status      String   // "present", "absent", "late"
+  remark      String?
+  arrivalTime String?
+
+  @@unique([trainingId, playerId])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  trainingId  String
+  training    Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text        String
+  timestamp   DateTime @default(now())
+}
+
+model MedicalReport {
+  id              String   @id @default(uuid())
+  playerId        String
+  player          User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  type            String   // "blessure", "gêne"
+  zone            String
+  severity        String   // "légère", "modérée", "grave"
+  description     String?
+  startDate       String
+  estimatedReturn String?
+  status          String   @default("actif") // "actif", "guéri"
+  createdAt       DateTime @default(now())
+}
+
+model Match {
+  id           String   @id @default(uuid())
+  title        String
+  date         String
+  startTime    String
+  endTime      String
+  location     String
+  opponent     String
+  type         String   // "domicile", "extérieur"
+  team         String
+  liveState    String   @default("{}") // JSON string for liveState
+  convocations String   @default("[]") // JSON string for array of playerIds
+  convStatus   String   @default("{}") // JSON string for status map
+  lineup       String   @default("{}") // JSON string for lineup map
+  createdAt    DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
+
+model PublicTeamMember {
+  id        String  @id @default(uuid())
+  name      String
+  role      String
+  email     String
+  photoUrl  String?
+}
+
+model PublicMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  read      Boolean  @default(false)
+  timestamp DateTime @default(now())
+}
+
+model ClubConfig {
+  id      String @id @default(uuid())
+  sport   String
+  format  String
+}
